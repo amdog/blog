@@ -1,0 +1,39 @@
+<?php
+$connect=mysqli_connect("127.0.0.1","root","b");
+mysqli_select_db( $connect, 'local' );
+mysqli_query($connect,"set names utf8");
+function isLogin(){
+    if($_COOKIE && $_COOKIE['token']){
+    $token=$_COOKIE['token'];
+    $userInf=json_decode(file_get_contents("https://gitee.com/api/v5/user?access_token=".$token));
+    if($userInf && $userInf->login == "imdog"){      
+        return 1;
+      }
+        else{
+            echo "ERROR_DENIED";
+        }
+    }
+}
+if($_POST && array_key_exists('content_html',$_POST)){
+    if(isLogin() == 1){
+            $retval = mysqli_query( $connect,"insert into blog(title,content_text,content_html,b_tag) values ('{$_POST['title']}','{$_POST['content_text']}','{$_POST['content_html']}','{$_POST['b_tag']}')");
+            if($retval == '1'){
+                echo 'SUCCESS_INSERT';
+                header("location:/");
+            }
+            if($_POST && array_key_exists('update',$_POST){
+               mysqli_query($connect,"delete from blog where id={$_POST['update']}");
+            }
+    }
+}
+if($_POST &&  array_key_exists('token',$_POST)){
+    setcookie("token",$_POST['token'],time()+60*60*23,"/");
+    echo 'SUCCESS_OK';
+}
+if($_GET &&  array_key_exists('action',$_GET)){
+    if($_GET['action'] == 'delete' && isLogin() == 1){
+        $retval=mysqli_query($connect,"delete from blog where id={$_GET['id']}");
+	header("location:/");
+    }
+}
+?>
